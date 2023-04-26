@@ -3,6 +3,9 @@ import * as iam from "@aws-cdk/aws-iam";
 import * as eks from "@aws-cdk/aws-eks";
 import * as ec2 from "@aws-cdk/aws-ec2";
 
+import nginxDeploy from "../k8s/nginxDeploy";
+import nginxSvc from "../k8s/nginxSvc";
+
 // import { Construct } from 'constructs';
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
@@ -10,6 +13,7 @@ export class EksClusterStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    /* cluster creation */
     const clusterAdmin = new iam.Role(this, "AdminRole", {
       assumedBy: new iam.AccountRootPrincipal(),
     });
@@ -20,8 +24,6 @@ export class EksClusterStack extends cdk.Stack {
       version: eks.KubernetesVersion.of("1.25"),
       defaultCapacity: 0,
     });
-
-    // cluster.awsAuth.addMastersRole(clusterAdmin, 'clusterAdmin');
 
     cluster.addNodegroupCapacity("spot-ng1", {
       instanceTypes: [
@@ -35,5 +37,9 @@ export class EksClusterStack extends cdk.Stack {
       desiredSize: 1,
       capacityType: eks.CapacityType.SPOT,
     });
+
+    /* nginx deploy+svc */
+    cluster.addManifest("nginxDeploy", nginxDeploy);
+    cluster.addManifest("nginxSvc", nginxSvc);
   }
 }
